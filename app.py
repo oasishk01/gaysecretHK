@@ -3,26 +3,25 @@ import sqlite3
 from datetime import datetime
 import hashlib
 import base64
-import os
-
-# 初始化資料庫 - 先刪除舊的
-if os.path.exists('forum.db'):
-    os.remove('forum.db')
 
 conn = sqlite3.connect('forum.db', check_same_thread=False)
 c = conn.cursor()
 
-# 重新建立 tables (加咗 avatar)
+# 先加 avatar column (如果冇嘅話)
+try:
+    c.execute("ALTER TABLE users ADD COLUMN avatar TEXT")
+except:
+    pass  # column已經存在
+
+# 確保 tables 存在
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, title TEXT, content TEXT, author TEXT, date TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, post_id INTEGER, content TEXT, author TEXT, date TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, role TEXT DEFAULT 'user', avatar TEXT)''')
 conn.commit()
 
-# 哈希密碼函數
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# 登入/註冊功能
 def auth_page():
     st.header("用戶認證")
     tab1, tab2 = st.tabs(["登入", "註冊"])
@@ -67,7 +66,6 @@ def auth_page():
                 except sqlite3.IntegrityError:
                     st.error("用戶名已存在")
 
-# Streamlit 應用
 st.title("Gay Spa 香港討論區")
 
 if 'user' not in st.session_state:
