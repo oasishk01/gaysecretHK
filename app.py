@@ -37,21 +37,41 @@ def time_ago(d):
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS - 隱藏Streamlit + Reddit風格 ====================
+# ==================== CSS - 完全隱藏Streamlit元素 ====================
 st.markdown("""
 <style>
-    /* 隱藏 Streamlit 皇冠/footer */
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; }
-    .stApp > header { display: none; }
-    
-    /* 底部 Streamlit footer 完全隱藏 */
+    /* 完全移除 Streamlit header 和 footer */
+    header[data-testid="stHeader"] { display: none !important; }
+    div[data-testid="stMainMenu"] { display: none !important; }
+    footer { display: none !important; }
     div[data-testid="stFooter"] { display: none !important; }
-    
-    /* 還有隱藏所有 footer 相關 */
     .stDeployButton { display: none !important; }
     
-    /* ========== 基礎樣式 ========== */
+    /* 隱藏所有可能的footer相關 */
+    [data-testid="stBottom"] { display: none !important; }
+    
+    /* Streamlit 舊版 */
+    #header { display: none !important; }
+    #main-menu { display: none !important; }
+    footer { display: none !important; }
+    
+    /* 還有任何皇冠相關 */
+    .streamlit-crown { display: none !important; }
+    [data-testid="streamlit-crown"] { display: none !important; }
+    
+    /* 隱藏右上角所有按鈕 */
+    .stApp > div:nth-child(1) > div > div:nth-child(1) { display: none !important; }
+    
+    /* 隱藏第二個header */
+    header { display: none !important; }
+    
+    /* 最強: 隱藏所有header相關 */
+    .stHeader { display: none !important; }
+    
+    /* 隱藏底部 */
+    .stBottom { display: none !important; }
+    
+    /* 基礎樣式 */
     * { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .stApp { background-color: #dae0e6; color: #1c1c1c; }
     
@@ -110,6 +130,9 @@ st.markdown("""
     }
     
     .text-muted { color: #7c7c7c; font-size: 12px; }
+    
+    /* 隱藏側邊欄toggle */
+    button[data-testid="collapsedControl"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -262,10 +285,7 @@ else:
                     conn.commit()
                     st.rerun()
 
-# 底部
 st.markdown("""
 <hr style="margin: 24px 0; border: none; border-top: 1px solid #edeff1;">
-<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">
-    💬 討論區
-</div>
+<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">💬 討論區</div>
 """, unsafe_allow_html=True)
