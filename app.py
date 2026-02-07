@@ -38,48 +38,55 @@ def time_ago(d):
         return d
     except: return d
 
-# ==================== 簡潔CSS ====================
+# ==================== CSS ====================
 st.set_page_config(page_title="Gay Spa 香港討論區", page_icon="💬", layout="wide")
 
 st.markdown("""
 <style>
-    /* 全局 - 乾淨白底 */
-    .stApp { background: #f8f9fa; }
-    h1 { color: #1a1a2e !important; text-align: center; font-size: 36px !important; margin-bottom: 10px !important; }
+    /* 全局 - 白底黑字 */
+    .stApp { background: #ffffff; color: #333333 !important; }
+    h1 { color: #222222 !important; text-align: center; font-size: 32px !important; margin-bottom: 10px !important; }
+    h2, h3, h4 { color: #222222 !important; }
+    p, div, span { color: #333333 !important; }
     
     /* 卡片 */
-    .card { background: white; border-radius: 12px; padding: 20px; margin: 12px 0; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .card { background: #fafafa; border-radius: 12px; padding: 20px; margin: 12px 0; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #eeeeee; }
     
     /* 按鈕 */
     .stButton > button { 
-        background: #4361ee !important; color: white !important; 
+        background: #2563eb !important; color: white !important; 
         border-radius: 8px !important; border: none !important; 
         padding: 8px 20px !important; font-weight: 500 !important; 
     }
     
     /* 標籤 */
-    .tag { display: inline-block; padding: 4px 12px; background: #4361ee; 
-           color: white; border-radius: 15px; font-size: 12px; margin-right: 8px; }
+    .tag { display: inline-block; padding: 4px 12px; background: #2563eb; 
+           color: white !important; border-radius: 15px; font-size: 12px; margin-right: 8px; }
     
     /* 輸入框 */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-        border-radius: 8px !important; border: 1px solid #ddd !important; 
+        border-radius: 8px !important; border: 1px solid #dddddd !important; 
+        background: white !important; color: #333333 !important;
     }
     
     /* 側邊欄 */
-    [data-testid="stSidebar"] { background: white !important; border-right: 1px solid #eee !important; }
+    [data-testid="stSidebar"] { background: #f8f9fa !important; border-right: 1px solid #eeeeee !important; }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] div { color: #333333 !important; }
     
     /* 擴展器 */
-    .streamlit-expanderHeader { background: white !important; border-radius: 8px !important; }
+    .streamlit-expanderHeader { background: #f8f9fa !important; color: #333333 !important; border-radius: 8px !important; }
+    
+    /* 輸入框 placeholder */
+    ::placeholder { color: #999999 !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==================== 標題 ====================
 st.markdown("""
-<div style="text-align: center; padding: 20px 0 30px;">
-    <h1>💬 Gay Spa 香港討論區</h1>
-    <p style="color: #666;">分享 · 傾偈 · 搵資料</p>
+<div style="text-align: center; padding: 20px 0 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: -20px -20px 20px -20px;">
+    <h1 style="color: white !important; margin: 0 !important;">💬 Gay Spa 香港討論區</h1>
+    <p style="color: rgba(255,255,255,0.9) !important; margin: 10px 0 0 !important;">分享 · 傾偈 · 搵資料</p>
 </div>
 <hr style="margin: 20px 0;">
 """, unsafe_allow_html=True)
@@ -131,12 +138,10 @@ else:
     user = st.session_state['user']
     role = st.session_state.get('role', 'user')
     
-    # 側邊欄
     with st.sidebar:
         st.markdown(f"### 👤 {user}")
         st.markdown(f"<span class='tag'>{role}</span>", unsafe_allow_html=True)
         
-        # 統計
         c.execute("SELECT COUNT(*) FROM posts WHERE author=?", (user,))
         st.markdown(f"**帖子:** {c.fetchone()[0]}")
         
@@ -158,7 +163,6 @@ else:
                 st.success("發布成功！")
                 st.rerun()
     
-    # 主內容
     # 搜尋 + 篩選
     col_s1, col_s2 = st.columns([3, 1])
     search = col_s1.text_input("🔍 搜尋", placeholder="輸入關鍵詞...")
@@ -168,18 +172,22 @@ else:
     c.execute("SELECT COUNT(*) FROM users")
     c.execute("SELECT COUNT(*) FROM posts")
     c.execute("SELECT COUNT(*) FROM messages")
+    u_count = c.fetchone()[0]
+    p_count = c.fetchone()[0]
+    m_count = c.fetchone()[0]
+    
     st.markdown(f"""
     <div style="display: flex; gap: 20px; margin: 20px 0;">
         <div class="card" style="flex: 1; text-align: center;">
-            <div style="font-size: 28px; font-weight: bold; color: #4361ee;">{c.fetchone()[0]}</div>
+            <div style="font-size: 28px; font-weight: bold; color: #2563eb;">{u_count}</div>
             <div style="color: #666; font-size: 14px;">用戶</div>
         </div>
         <div class="card" style="flex: 1; text-align: center;">
-            <div style="font-size: 28px; font-weight: bold; color: #4361ee;">{c.fetchone()[0]}</div>
+            <div style="font-size: 28px; font-weight: bold; color: #2563eb;">{p_count}</div>
             <div style="color: #666; font-size: 14px;">帖子</div>
         </div>
         <div class="card" style="flex: 1; text-align: center;">
-            <div style="font-size: 28px; font-weight: bold; color: #4361ee;">{c.fetchone()[0]}</div>
+            <div style="font-size: 28px; font-weight: bold; color: #2563eb;">{m_count}</div>
             <div style="color: #666; font-size: 14px;">留言</div>
         </div>
     </div>
@@ -204,11 +212,11 @@ else:
                 if av_data:
                     st.markdown(f'<img src="data:image/png;base64,{av_data}" style="width:40px;height:40px;border-radius:50%;">', unsafe_allow_html=True)
                 else:
-                    st.markdown(f"<div style='width:40px;height:40px;background:#4361ee;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;'>{post[3][0].upper()}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='width:40px;height:40px;background:#2563eb;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;'>{post[3][0].upper()}</div>", unsafe_allow_html=True)
             with col_text:
                 st.markdown(f"""
                 <span class='tag'>{post[5]}</span>
-                <span style='color:#999;font-size:12px;'>{post[4]} · {post[3]}</span>
+                <span style='color:#666;font-size:12px;'>{post[4]} · {post[3]}</span>
                 """, unsafe_allow_html=True)
                 st.write(post[2])
             
@@ -232,7 +240,7 @@ else:
 # 底部
 st.markdown("""
 <hr style="margin: 30px 0;">
-<div style="text-align: center; color: #999; font-size: 12px;">
-    💬 Gay Spa 香港討論區 · Made with ❤️
+<div style="text-align: center; color: #999999; font-size: 12px;">
+    💬 Gay Spa 香港討論區
 </div>
 """, unsafe_allow_html=True)
