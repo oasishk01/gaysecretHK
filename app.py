@@ -3,28 +3,12 @@ import sqlite3
 from datetime import datetime
 import hashlib
 
-# ==================== 初始化 (自動修復表結構) ====================
+# ==================== 初始化 (安全模式) ====================
 conn = sqlite3.connect('forum.db', check_same_thread=False)
 c = conn.cursor()
 
-# 自動修復表結構
-try:
-    # 嘗試檢查users表
-    c.execute("PRAGMA table_info(users)")
-    cols = c.fetchall()
-    if len(cols) < 8:
-        # 表結構不完整，刪除重建
-        c.execute("DROP TABLE IF EXISTS users")
-        c.execute("DROP TABLE IF EXISTS posts")
-        c.execute("DROP TABLE IF EXISTS messages")
-        print("🗑️ 刪除舊表結構")
-except:
-    c.execute("DROP TABLE IF EXISTS users")
-    c.execute("DROP TABLE IF EXISTS posts")
-    c.execute("DROP TABLE IF EXISTS messages")
-
-# 創建新表
-c.execute('''CREATE TABLE users (
+# 只創建表，如果存在就跳過
+c.execute('''CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY, 
     username TEXT UNIQUE, 
     password_hash TEXT, 
@@ -35,7 +19,7 @@ c.execute('''CREATE TABLE users (
     join_date TEXT
 )''')
 
-c.execute('''CREATE TABLE posts (
+c.execute('''CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY, 
     title TEXT, 
     content TEXT, 
@@ -44,7 +28,7 @@ c.execute('''CREATE TABLE posts (
     category TEXT DEFAULT '一般'
 )''')
 
-c.execute('''CREATE TABLE messages (
+c.execute('''CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY, 
     post_id INTEGER, 
     content TEXT, 
@@ -68,7 +52,7 @@ def time_ago(d):
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS - Reddit風格 ====================
+# ==================== CSS ====================
 st.markdown("""
 <style>
     * { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -150,12 +134,11 @@ if 'user' not in st.session_state:
         password = st.text_input("密碼", type="password", key="login_pass", placeholder="密碼")
         
         if st.button("登入"):
-            c.execute("SELECT password_hash, role, avatar FROM users WHERE username=?", (username,))
+            c.execute("SELECT password_hash, role FROM users WHERE username=?", (username,))
             user = c.fetchone()
             if user and user[0] == hash_pw(password):
                 st.session_state['user'] = username
                 st.session_state['role'] = user[1]
-                st.session_state['avatar'] = user[2]
                 st.rerun()
             else:
                 st.error("用戶名或密碼錯誤")
@@ -167,8 +150,6 @@ if 'user' not in st.session_state:
         new_username = st.text_input("用戶名", key="reg_user", placeholder="用戶名")
         new_password = st.text_input("密碼", type="password", key="reg_pass", placeholder="密碼")
         confirm_password = st.text_input("確認密碼", type="password", key="reg_confirm", placeholder="確認密碼")
-        email = st.text_input("Email (可選)", key="reg_email", placeholder="電郵")
-        bio = st.text_area("個人簡介 (可選)", key="reg_bio", placeholder="介紹自己...", height=60)
         
         if st.button("註冊"):
             if not new_username:
@@ -182,9 +163,9 @@ if 'user' not in st.session_state:
                     c.execute("SELECT COUNT(*) FROM users")
                     is_first = c.fetchone()[0] == 0
                     role = 'admin' if is_first else 'user'
-                    c.execute("""INSERT INTO users (username, password_hash, role, bio, email, join_date) 
-                              VALUES (?, ?, ?, ?, ?, ?)""",
-                             (new_username, hash_pw(new_password), role, bio or '', email or '', datetime.now().strftime("%Y-%m-%d")))
+                    c.execute("""INSERT INTO users (username, password_hash, role, join_date) 
+                              VALUES (?, ?, ?, ?)""",
+                             (new_username, hash_pw(new_password), role, datetime.now().strftime("%Y-%m-%d")))
                     conn.commit()
                     st.success("註冊成功！請登入")
                 except sqlite3.IntegrityError:
@@ -257,17 +238,11 @@ else:
     
     for post in posts:
         with st.expander(f"📌 {post[1]}"):
-            c.execute("SELECT avatar FROM users WHERE username=?", (post[3],))
-            av = c.fetchone()
-            
             col_author, col_content = st.columns([1, 5])
             with col_author:
-                if av and av[0]:
-                    st.markdown(f'<img src="data:image/png;base64,{av[0]}" style="width:40px;height:40px;border-radius:50%;">', unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""<div style="width:40px;height:40px;background:#878a8c;border-radius:50%;
-                                display:flex;align-items:center;justify-content:center;color:white;
-                                font-weight:600;font-size:14px;">{post[3][0].upper()}</div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div style="width:40px;height:40px;background:#878a8c;border-radius:50%;
+                            display:flex;align-items:center;justify-content:center;color:white;
+                            font-weight:600;font-size:14px;">{post[3][0].upper()}</div>""", unsafe_allow_html=True)
             
             with col_content:
                 st.markdown(f"""<span class="category-tag {post[5]}">{post[5]}</span>
