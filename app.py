@@ -12,7 +12,7 @@ conn.commit()
 # Streamlit App
 st.title("Gay Spa 香港討論區")
 
-# Sidebar: New Post
+# Sidebar: New Post + Delete All
 with st.sidebar:
     st.header("發新帖")
     title = st.text_input("標題 Title")
@@ -23,24 +23,39 @@ with st.sidebar:
         c.execute("INSERT INTO posts (title, content, author, date) VALUES (?, ?, ?, ?)", (title, content, author, date))
         conn.commit()
         st.success("帖子已發佈！")
+    
+    st.divider()
+    
+    # Delete All Button
+    st.header("管理 Admin")
+    if st.button("🗑️ 刪除所有帖子 Delete All"):
+        c.execute("DELETE FROM posts")
+        c.execute("DELETE FROM messages")
+        conn.commit()
+        st.success("已刪除所有內容！")
+        st.rerun()
 
 # Main Page: Show Posts
 posts = c.execute("SELECT * FROM posts ORDER BY date DESC").fetchall()
-for post in posts:
-    with st.expander(f"{post[1]} by {post[3]} on {post[4]}"):
-        st.write(post[2])
-        
-        # Real-time Chat
-        st.subheader("實時留言 Real-time Chat")
-        messages = c.execute("SELECT * FROM messages WHERE post_id=? ORDER BY date", (post[0],)).fetchall()
-        for msg in messages:
-            st.write(f"{msg[3]} ({msg[4]}): {msg[2]}")
-        
-        # Send Message
-        msg_author = st.text_input("你的名字 Your name", key=f"author_{post[0]}")
-        msg_content = st.text_input("留言 Message", key=f"msg_{post[0]}")
-        if st.button("發送 Send", key=f"send_{post[0]}"):
-            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            c.execute("INSERT INTO messages (post_id, content, author, date) VALUES (?, ?, ?, ?)", (post[0], msg_content, msg_author, date))
-            conn.commit()
-            st.rerun()
+
+if not posts:
+    st.write("暫時未有帖子，快啲發第一個啦！")
+else:
+    for post in posts:
+        with st.expander(f"{post[1]} by {post[3]} on {post[4]}"):
+            st.write(post[2])
+            
+            # Real-time Chat
+            st.subheader("實時留言 Real-time Chat")
+            messages = c.execute("SELECT * FROM messages WHERE post_id=? ORDER BY date", (post[0],)).fetchall()
+            for msg in messages:
+                st.write(f"{msg[3]} ({msg[4]}): {msg[2]}")
+            
+            # Send Message
+            msg_author = st.text_input("你的名字 Your name", key=f"author_{post[0]}")
+            msg_content = st.text_input("留言 Message", key=f"msg_{post[0]}")
+            if st.button("發送 Send", key=f"send_{post[0]}"):
+                date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                c.execute("INSERT INTO messages (post_id, content, author, date) VALUES (?, ?, ?, ?)", (post[0], msg_content, msg_author, date))
+                conn.commit()
+                st.rerun()
