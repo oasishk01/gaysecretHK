@@ -1,13 +1,15 @@
 """
-討論區 - 簡潔有力版
+討論區 v2.0 - 學習MCP Pattern後優化版
 """
+
 import streamlit as st
 import streamlit_authenticator as stauth
 import sqlite3
+from datetime import datetime
 
 # ==================== 數據庫 ====================
-def init_users_db():
-    """創建用戶表"""
+def init_db():
+    """初始化數據庫"""
     with sqlite3.connect('users.db') as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -17,45 +19,79 @@ def init_users_db():
                 email TEXT
             )
         ''')
+    
+    with sqlite3.connect('forum.db') as conn:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS posts (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                content TEXT,
+                author TEXT,
+                date TEXT,
+                category TEXT DEFAULT '一般'
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY,
+                post_id INTEGER,
+                content TEXT,
+                author TEXT,
+                date TEXT
+            )
+        ''')
 
-def get_all_users():
+def get_users():
     """拎所有用戶"""
     try:
         with sqlite3.connect('users.db') as conn:
             rows = conn.execute('SELECT * FROM users').fetchall()
-            users = {}
-            for row in rows:
-                users[row[0]] = {
-                    'name': row[1],
-                    'password': row[2],
-                    'email': row[3] or ''
-                }
-            return users
+            return {row[0]: {'name': row[1], 'password': row[2], 'email': row[3]} for row in rows}
     except:
         return {}
 
 def save_user(username, name, password, email=''):
-    """保存新用戶"""
+    """保存用戶"""
     with sqlite3.connect('users.db') as conn:
         conn.execute('INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?)',
                    (username, name, password, email))
 
+def get_posts(search=''):
+    """拎帖子"""
+    with sqlite3.connect('forum.db') as conn:
+        if search:
+            rows = conn.execute(
+                'SELECT * FROM posts WHERE title LIKE ? OR content LIKE ? ORDER BY date DESC',
+                (f'%{search}%', f'%{search}%')
+            ).fetchall()
+        else:
+            rows = conn.execute('SELECT * FROM posts ORDER BY date DESC').fetchall()
+        return rows
+
+def save_post(title, content, author, category):
+    """保存帖子"""
+    with sqlite3.connect('forum.db') as conn:
+        conn.execute(
+            'INSERT INTO posts (title, content, author, date, category) VALUES (?, ?, ?, ?, ?)',
+            (title, content, author, datetime.now().strftime('%Y-%m-%d %H:%M'), category)
+        )
+
 # ==================== 初始化 ====================
-init_users_db()
-credentials = get_all_users()
+init_db()
+credentials = get_users()
 
 # ==================== Authenticator ====================
 authenticator = stauth.Authenticate(
     credentials,
     'forum_cookie',
-    'forum_secret_key',
+    'forum_secret',
     cookie_expiry_days=30
 )
 
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# CSS
+# CSS - 白底黑字
 st.markdown('''
 <style>
 .stApp { background: #fff; color: #000; }
@@ -69,10 +105,6 @@ h1, h2, h3 { font-weight: bold; }
 .stTextArea > div > div > textarea {
     background: #fff !important; color: #000 !important;
     border: 1px solid #000 !important;
-}
-.post-card {
-    background: #fff !important; border: 1px solid #000 !important;
-    border-radius: 4px !important; padding: 8px; margin: 8px 0;
 }
 footer { visibility: hidden; }
 </style>
@@ -111,16 +143,15 @@ with st.sidebar:
         st.markdown('#### 註冊')
         try:
             if authenticator.register_user('註冊', preauthorization=False):
-                # Save new user to database
-                users = get_all_users()
+                users = get_users()
                 if users:
-                    new_username = list(users.keys())[-1]
-                    new_user = users[new_username]
+                    new_user = list(users.keys())[-1]
+                    user_data = users[new_user]
                     save_user(
-                        new_username,
-                        new_user['name'],
-                        new_user['password'],
-                        new_user.get('email', '')
+                        new_user,
+                        user_data['name'],
+                        user_data['password'],
+                        user_data.get('email', '')
                     )
                 st.success('註冊成功！請登入。')
         except Exception as e:
@@ -131,10 +162,37 @@ with st.sidebar:
 st.title('討論區')
 
 if st.session_state.get('authentication_status'):
-    st.success(f'你已登入為 {st.session_state.username}')
-else:
-    st.warning('請登入或註冊以發帖和留言')
+    user = st.session_state.username
+    st.success(f'你已登入為 {user}')
+    
+    # 發帖
+    with st.expander('發佈新帖'):
+        title = st.text_input('標題')
+        content = st.text_area('內容')
+        category = st.selectbox('分類', ['一般', '討論', '問題', '分享', '吹水'])
+        if st.button('發佈'):
+            if title and content:
+                save_post(title, content, user, category)
+                st.success('發佈成功！')
+                st.rerun()
 
-st.markdown('---')
-st.markdown('**最新帖文**')
-st.write('暫時未有帖子，快啲登入發第一個啦！')
+# 搜尋
+search = st.text_input('🔍 搜尋', placeholder='輸入關鍵詞...')
+
+# 帖子列表
+posts = get_posts(search)
+st.markdown(f'**帖子 ({len(posts)})**')
+
+for post in posts:
+    with st.expander(f'📌 {post[1]}'):
+        st.markdown(f'''
+        <span style="background: #000; color: #fff; padding: 2px 8px; border-radius: 2px; font-size: 12px;">{post[5]}</span>
+        <span style="color: #666; font-size: 12px;">{post[4]} · {post[3]}</span>
+        ''', unsafe_allow_html=True)
+        st.write(post[2])
+
+# ==================== 底部 ====================
+st.markdown('''
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #000;">
+<div style="text-align: center; font-size: 12px; padding: 16px;">討論區</div>
+''', unsafe_allow_html=True)
