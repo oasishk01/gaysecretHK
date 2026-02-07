@@ -37,59 +37,83 @@ def time_ago(d):
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS - 白底黑字 ====================
+# ==================== CSS ====================
 st.markdown("""
 <style>
-    .stApp { background-color: #ffffff; color: #000000; }
-    * { color: #000000 !important; }
-    h1, h2, h3 { font-weight: bold; }
-    
-    .stButton > button {
-        background-color: #000000 !important;
-        color: #ffffff !important;
-        border-radius: 4px !important;
-    }
-    .stButton > button:hover {
-        background-color: #333333 !important;
-    }
-    
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #000000 !important;
-    }
-    
-    .post-card {
-        background-color: #ffffff !important;
-        border: 1px solid #000000 !important;
-        border-radius: 4px !important;
-        padding: 8px !important;
-        margin: 8px 0 !important;
-    }
-    
-    .category-tag {
-        display: inline-block;
-        padding: 2px 8px;
-        background-color: #000000;
-        color: #ffffff !important;
-        border-radius: 2px;
-        font-size: 12px;
-    }
-    
-    [data-testid="stSidebar"] { background-color: #ffffff !important; }
-    .streamlit-expanderHeader {
-        background-color: #ffffff !important;
-        border: 1px solid #000000 !important;
-    }
-    footer { visibility: hidden; }
+/* 按钮 - 确保文字白色 */
+.stButton > button {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-weight: bold !important;
+}
+
+.stButton > button:hover {
+    background-color: #555555 !important;
+}
+
+/* 输入框 */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+}
+
+/* 背景 */
+.stApp {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* 卡片 */
+.post-card {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+    border-radius: 4px !important;
+    padding: 8px !important;
+    margin: 8px 0 !important;
+}
+
+/* 标题 */
+h1, h2, h3 {
+    color: #000000 !important;
+    font-weight: bold !important;
+}
+
+/* 标签 */
+.category-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+/* 侧边栏 */
+[data-testid="stSidebar"] {
+    background-color: #ffffff !important;
+}
+
+/* 展开器 */
+.streamlit-expanderHeader {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+}
+
+/* Footer隐藏 */
+footer {
+    visibility: hidden !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ==================== 標題 ====================
 st.markdown("""
 <div style="background-color: #ffffff; padding: 16px 24px; margin: -20px -20px 16px -20px; border-bottom: 2px solid #000000;">
-    <h1>討論區</h1>
+    <h1 style="color: #000000 !important;">討論區</h1>
     <p style="color: #666666;">分享 · 傾偈 · 交流</p>
 </div>
 """, unsafe_allow_html=True)
@@ -100,11 +124,21 @@ if 'user' not in st.session_state:
     
     with col_login:
         st.markdown('<div class="post-card">', unsafe_allow_html=True)
-        st.markdown("### 登入")
+        st.markdown('<h3 style="color: #000000 !important;">登入</h3>', unsafe_allow_html=True)
         username = st.text_input("用戶名", key="login_user", placeholder="用戶名")
         password = st.text_input("密碼", type="password", key="login_pass", placeholder="密碼")
         
-        if st.button("登入", key="btn_login"):
+        st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: #333333 !important;
+            color: #ffffff !important;
+            width: 100%;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        if st.button("登入"):
             c.execute("SELECT password_hash, role FROM users WHERE username=?", (username,))
             user = c.fetchone()
             if user and user[0] == hash_pw(password):
@@ -117,12 +151,12 @@ if 'user' not in st.session_state:
     
     with col_reg:
         st.markdown('<div class="post-card">', unsafe_allow_html=True)
-        st.markdown("### 註冊")
+        st.markdown('<h3 style="color: #000000 !important;">註冊</h3>', unsafe_allow_html=True)
         new_username = st.text_input("用戶名", key="reg_user", placeholder="用戶名")
         new_password = st.text_input("密碼", type="password", key="reg_pass", placeholder="密碼")
         confirm_password = st.text_input("確認密碼", type="password", key="reg_confirm", placeholder="確認密碼")
         
-        if st.button("註冊", key="btn_reg"):
+        if st.button("註冊"):
             if not new_username:
                 st.error("用戶名不能為空")
             elif not new_password:
