@@ -3,13 +3,19 @@ import sqlite3
 from datetime import datetime
 import hashlib
 import base64
+import os
 
-# 初始化資料庫
+# 初始化資料庫 - 先刪除舊的
+if os.path.exists('forum.db'):
+    os.remove('forum.db')
+
 conn = sqlite3.connect('forum.db', check_same_thread=False)
 c = conn.cursor()
+
+# 重新建立 tables (加咗 avatar)
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, title TEXT, content TEXT, author TEXT, date TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, post_id INTEGER, content TEXT, author TEXT, date TEXT)''')
-c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, role TEXT DEFAULT 'user', avatar TEXT DEFAULT NULL)''')
+c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, role TEXT DEFAULT 'user', avatar TEXT)''')
 conn.commit()
 
 # 哈希密碼函數
@@ -64,7 +70,6 @@ def auth_page():
 # Streamlit 應用
 st.title("Gay Spa 香港討論區")
 
-# 檢查登入狀態
 if 'user' not in st.session_state:
     auth_page()
 else:
