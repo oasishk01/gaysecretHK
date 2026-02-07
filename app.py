@@ -35,39 +35,20 @@ def time_ago(d):
     except: return d
 
 # ==================== 頁面設置 ====================
-st.set_page_config(page_title="討論區", page_icon="💬", layout="centered")
+st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS - 完全移除所有Streamlit UI ====================
+# ==================== CSS - 只隱藏皇冠，保留功能 ====================
 st.markdown("""
 <style>
-    /* 完全移除所有Streamlit頂部元素 */
-    .stApp > div:first-child { display: none !important; }
-    header { display: none !important; }
-    [data-testid="stHeader"] { display: none !important; }
-    [data-testid="stMainMenu"] { display: none !important; }
-    .stApp > header { display: none !important; }
-    
-    /* 移除頂部margin/padding */
-    .stApp { padding-top: 0 !important; margin-top: 0 !important; }
-    
-    /* 移除header後的空白 */
-    div[data-testid="stAppViewContainer"] { padding-top: 0 !important; }
-    section[data-testid="stSidebar"] { margin-top: 0 !important; }
-    
-    /* Footer相關 */
-    footer { display: none !important; }
-    [data-testid="stFooter"] { display: none !important; }
-    .stDeployButton { display: none !important; }
-    
-    /* 隱藏所有header元素 */
-    #header { display: none !important; }
-    #main-menu { display: none !important; }
+    /* 只隱藏Streamlit footer (皇冠)，保留其他 */
+    footer { visibility: hidden !important; }
+    div[data-testid="stFooter"] { visibility: hidden !important; }
     
     /* 基礎樣式 */
     * { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .stApp { background-color: #dae0e6; color: #1c1c1c; min-height: 100vh; }
+    .stApp { background-color: #dae0e6; }
     
-    h1 { color: #1c1c1c !important; font-size: 24px !important; font-weight: 700 !important; }
+    h1 { color: #1c1c1c !important; font-size: 28px !important; font-weight: 700 !important; text-align: center; }
     h2, h3 { color: #1c1c1c !important; font-weight: 600 !important; }
     
     .stButton > button {
@@ -86,7 +67,6 @@ st.markdown("""
         border-radius: 4px !important;
         padding: 10px !important;
         background-color: white !important;
-        color: #1c1c1c !important;
     }
     
     .post-card {
@@ -125,74 +105,71 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== 標題 (無margin) ====================
+# ==================== 標題 ====================
 st.markdown("""
-<div style="background-color: white; padding: 12px 16px; border-bottom: 1px solid #edeff1;">
-    <h1 style="margin: 0 !important; font-size: 22px !important;">討論區</h1>
-    <p style="color: #7c7c7c; margin: 4px 0 0 0; font-size: 12px;">分享 · 傾偈 · 交流</p>
+<div style="background-color: white; padding: 16px 24px; margin: -20px -20px 16px -20px; border-bottom: 1px solid #edeff1;">
+    <h1>💬 討論區</h1>
+    <p style="color: #7c7c7c; margin: 8px 0 0 0; font-size: 14px;">分享 · 傾偈 · 交流</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ==================== 登入/註冊 ====================
-st.markdown('<div style="padding: 12px;">', unsafe_allow_html=True)
-
-col_login, col_reg = st.columns([1, 1])
-
-with col_login:
-    st.markdown('<div class="post-card">', unsafe_allow_html=True)
-    st.markdown("### 🔐 登入")
-    username = st.text_input("用戶名", key="login_user", placeholder="用戶名")
-    password = st.text_input("密碼", type="password", key="login_pass", placeholder="密碼")
+if 'user' not in st.session_state:
+    col_login, col_reg = st.columns([1, 1])
     
-    if st.button("登入"):
-        c.execute("SELECT password_hash, role FROM users WHERE username=?", (username,))
-        user = c.fetchone()
-        if user and user[0] == hash_pw(password):
-            st.session_state['user'] = username
-            st.session_state['role'] = user[1]
-            st.rerun()
-        else:
-            st.error("用戶名或密碼錯誤")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col_reg:
-    st.markdown('<div class="post-card">', unsafe_allow_html=True)
-    st.markdown("### ✨ 註冊")
-    new_username = st.text_input("用戶名", key="reg_user", placeholder="用戶名")
-    new_password = st.text_input("密碼", type="password", key="reg_pass", placeholder="密碼")
-    confirm_password = st.text_input("確認密碼", type="password", key="reg_confirm", placeholder="確認密碼")
+    with col_login:
+        st.markdown('<div class="post-card">', unsafe_allow_html=True)
+        st.markdown("### 🔐 登入")
+        username = st.text_input("用戶名", key="login_user", placeholder="用戶名")
+        password = st.text_input("密碼", type="password", key="login_pass", placeholder="密碼")
+        
+        if st.button("登入"):
+            c.execute("SELECT password_hash, role FROM users WHERE username=?", (username,))
+            user = c.fetchone()
+            if user and user[0] == hash_pw(password):
+                st.session_state['user'] = username
+                st.session_state['role'] = user[1]
+                st.rerun()
+            else:
+                st.error("用戶名或密碼錯誤")
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    if st.button("註冊"):
-        if not new_username:
-            st.error("用戶名不能為空")
-        elif not new_password:
-            st.error("密碼不能為空")
-        elif new_password != confirm_password:
-            st.error("密碼不一致")
-        else:
-            try:
-                c.execute("SELECT COUNT(*) FROM users")
-                is_first = c.fetchone()[0] == 0
-                role = 'admin' if is_first else 'user'
-                c.execute("""INSERT INTO users (username, password_hash, role, join_date) 
-                          VALUES (?, ?, ?, ?)""",
-                         (new_username, hash_pw(new_password), role, datetime.now().strftime("%Y-%m-%d")))
-                conn.commit()
-                st.success("註冊成功！請登入")
-            except sqlite3.IntegrityError:
-                st.error("用戶名已被使用")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
+    with col_reg:
+        st.markdown('<div class="post-card">', unsafe_allow_html=True)
+        st.markdown("### ✨ 註冊")
+        new_username = st.text_input("用戶名", key="reg_user", placeholder="用戶名")
+        new_password = st.text_input("密碼", type="password", key="reg_pass", placeholder="密碼")
+        confirm_password = st.text_input("確認密碼", type="password", key="reg_confirm", placeholder="確認密碼")
+        
+        if st.button("註冊"):
+            if not new_username:
+                st.error("用戶名不能為空")
+            elif not new_password:
+                st.error("密碼不能為空")
+            elif new_password != confirm_password:
+                st.error("密碼不一致")
+            else:
+                try:
+                    c.execute("SELECT COUNT(*) FROM users")
+                    is_first = c.fetchone()[0] == 0
+                    role = 'admin' if is_first else 'user'
+                    c.execute("""INSERT INTO users (username, password_hash, role, join_date) 
+                              VALUES (?, ?, ?, ?)""",
+                             (new_username, hash_pw(new_password), role, datetime.now().strftime("%Y-%m-%d")))
+                    conn.commit()
+                    st.success("註冊成功！請登入")
+                except sqlite3.IntegrityError:
+                    st.error("用戶名已被使用")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ==================== 主頁 ====================
-if 'user' in st.session_state:
+else:
     user = st.session_state['user']
     role = st.session_state.get('role', 'user')
     
     with st.sidebar:
         st.markdown(f"""<div style="background: white; padding: 12px; border-radius: 4px; margin-bottom: 12px;">
-            <strong>{user}</strong>
+            <strong style="font-size: 16px;">👤 {user}</strong>
             <span style="background: #878a8c; color: white; padding: 2px 8px; border-radius: 2px; font-size: 12px; margin-left: 8px;">{role}</span>
         </div>""", unsafe_allow_html=True)
         
@@ -277,9 +254,7 @@ if 'user' in st.session_state:
                     conn.commit()
                     st.rerun()
 
-# 底部
 st.markdown("""
-<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px; margin-top: 24px;">
-    💬 討論區
-</div>
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #edeff1;">
+<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">💬 討論區</div>
 """, unsafe_allow_html=True)
