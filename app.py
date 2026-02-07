@@ -37,26 +37,22 @@ def time_ago(d):
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS - 最簡單：白底黑字 ====================
+# ==================== CSS - 白底黑字 ====================
 st.markdown("""
 <style>
-    /* 全部白色背景 */
     .stApp { background-color: #ffffff; color: #000000; }
-    
-    /* 全部黑色文字 */
     * { color: #000000 !important; }
+    h1, h2, h3 { font-weight: bold; }
     
-    /* 標題 */
-    h1, h2, h3 { color: #000000 !important; font-weight: bold; }
-    
-    /* 按鈕 */
     .stButton > button {
         background-color: #000000 !important;
         color: #ffffff !important;
         border-radius: 4px !important;
     }
+    .stButton > button:hover {
+        background-color: #333333 !important;
+    }
     
-    /* 輸入框 - 白底黑字 */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
         background-color: #ffffff !important;
@@ -64,7 +60,6 @@ st.markdown("""
         border: 1px solid #000000 !important;
     }
     
-    /* 卡片 */
     .post-card {
         background-color: #ffffff !important;
         border: 1px solid #000000 !important;
@@ -73,7 +68,6 @@ st.markdown("""
         margin: 8px 0 !important;
     }
     
-    /* 標籤 */
     .category-tag {
         display: inline-block;
         padding: 2px 8px;
@@ -83,16 +77,11 @@ st.markdown("""
         font-size: 12px;
     }
     
-    /* 側邊欄 */
     [data-testid="stSidebar"] { background-color: #ffffff !important; }
-    
-    /* 擴展器 */
     .streamlit-expanderHeader {
         background-color: #ffffff !important;
         border: 1px solid #000000 !important;
     }
-    
-    /* Footer */
     footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
@@ -100,7 +89,7 @@ st.markdown("""
 # ==================== 標題 ====================
 st.markdown("""
 <div style="background-color: #ffffff; padding: 16px 24px; margin: -20px -20px 16px -20px; border-bottom: 2px solid #000000;">
-    <h1>💬 討論區</h1>
+    <h1>討論區</h1>
     <p style="color: #666666;">分享 · 傾偈 · 交流</p>
 </div>
 """, unsafe_allow_html=True)
@@ -111,11 +100,11 @@ if 'user' not in st.session_state:
     
     with col_login:
         st.markdown('<div class="post-card">', unsafe_allow_html=True)
-        st.markdown("### 🔐 登入")
+        st.markdown("### 登入")
         username = st.text_input("用戶名", key="login_user", placeholder="用戶名")
         password = st.text_input("密碼", type="password", key="login_pass", placeholder="密碼")
         
-        if st.button("登入"):
+        if st.button("登入", key="btn_login"):
             c.execute("SELECT password_hash, role FROM users WHERE username=?", (username,))
             user = c.fetchone()
             if user and user[0] == hash_pw(password):
@@ -128,12 +117,12 @@ if 'user' not in st.session_state:
     
     with col_reg:
         st.markdown('<div class="post-card">', unsafe_allow_html=True)
-        st.markdown("### ✨ 註冊")
+        st.markdown("### 註冊")
         new_username = st.text_input("用戶名", key="reg_user", placeholder="用戶名")
         new_password = st.text_input("密碼", type="password", key="reg_pass", placeholder="密碼")
         confirm_password = st.text_input("確認密碼", type="password", key="reg_confirm", placeholder="確認密碼")
         
-        if st.button("註冊"):
+        if st.button("註冊", key="btn_reg"):
             if not new_username:
                 st.error("用戶名不能為空")
             elif not new_password:
@@ -160,7 +149,7 @@ else:
     role = st.session_state.get('role', 'user')
     
     with st.sidebar:
-        st.markdown(f"""<div style="background: #ffffff; padding: 12px; border: 1px solid #000; margin-bottom: 12px;">
+        st.markdown(f"""<div style="background: #fff; padding: 12px; border: 1px solid #000; margin-bottom: 12px;">
             <strong>{user}</strong>
             <span style="background: #000; color: #fff; padding: 2px 8px; font-size: 12px; margin-left: 8px;">{role}</span>
         </div>""", unsafe_allow_html=True)
@@ -170,7 +159,7 @@ else:
             st.rerun()
         
         st.markdown("---")
-        st.markdown("**📝 發新帖**")
+        st.markdown("**發新帖**")
         new_title = st.text_input("標題", key="new_title", placeholder="標題")
         new_content = st.text_area("內容", key="new_content", placeholder="內容...", height=80)
         category = st.selectbox("分類", ["一般", "討論", "問題", "分享", "吹水"])
@@ -186,7 +175,7 @@ else:
             else:
                 st.error("請填寫標題和內容")
     
-    search_term = st.text_input("🔍 搜尋帖子...", placeholder="輸入關鍵詞...")
+    search_term = st.text_input("搜尋帖子...", placeholder="輸入關鍵詞...")
     
     c.execute("SELECT COUNT(*) FROM users")
     c.execute("SELECT COUNT(*) FROM posts")
@@ -197,15 +186,15 @@ else:
     
     st.markdown(f"""
     <div style="display: flex; gap: 12px; margin: 16px 0;">
-        <div style="background: #ffffff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
+        <div style="background: #fff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
             <div style="font-size: 20px; font-weight: bold;">{u_cnt}</div>
             <div style="color: #666;">用戶</div>
         </div>
-        <div style="background: #ffffff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
+        <div style="background: #fff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
             <div style="font-size: 20px; font-weight: bold;">{p_cnt}</div>
             <div style="color: #666;">帖子</div>
         </div>
-        <div style="background: #ffffff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
+        <div style="background: #fff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
             <div style="font-size: 20px; font-weight: bold;">{m_cnt}</div>
             <div style="color: #666;">留言</div>
         </div>
@@ -216,10 +205,10 @@ else:
     c.execute("SELECT * FROM posts WHERE title LIKE ? OR content LIKE ? ORDER BY date DESC", (query, query))
     posts = c.fetchall()
     
-    st.markdown(f"**📋 帖子 ({len(posts)})**")
+    st.markdown(f"**帖子 ({len(posts)})**")
     
     for post in posts:
-        with st.expander(f"📌 {post[1]}"):
+        with st.expander(f" {post[1]}"):
             col_author, col_content = st.columns([1, 5])
             with col_author:
                 st.markdown(f"""<div style="width:40px;height:40px;background:#000;border-radius:50%;
@@ -232,7 +221,7 @@ else:
                 st.write(post[2])
             
             st.markdown("---")
-            st.markdown("**💬 留言**")
+            st.markdown("**留言**")
             c.execute("SELECT * FROM messages WHERE post_id=? ORDER BY date", (post[0],))
             msgs = c.fetchall()
             for msg in msgs:
@@ -248,5 +237,5 @@ else:
 
 st.markdown("""
 <hr style="margin: 24px 0; border: none; border-top: 1px solid #000;">
-<div style="text-align: center; color: #000; font-size: 12px; padding: 16px;">討論區</div>
+<div style="text-align: center; font-size: 12px; padding: 16px;">討論區</div>
 """, unsafe_allow_html=True)
