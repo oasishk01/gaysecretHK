@@ -3,22 +3,53 @@ import sqlite3
 from datetime import datetime
 import hashlib
 
-# ==================== 初始化 ====================
+# ==================== 初始化 (自動修復表結構) ====================
 conn = sqlite3.connect('forum.db', check_same_thread=False)
 c = conn.cursor()
 
-c.execute('''CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, 
-    role TEXT DEFAULT 'user', avatar TEXT, bio TEXT, email TEXT, join_date TEXT
+# 自動修復表結構
+try:
+    # 嘗試檢查users表
+    c.execute("PRAGMA table_info(users)")
+    cols = c.fetchall()
+    if len(cols) < 8:
+        # 表結構不完整，刪除重建
+        c.execute("DROP TABLE IF EXISTS users")
+        c.execute("DROP TABLE IF EXISTS posts")
+        c.execute("DROP TABLE IF EXISTS messages")
+        print("🗑️ 刪除舊表結構")
+except:
+    c.execute("DROP TABLE IF EXISTS users")
+    c.execute("DROP TABLE IF EXISTS posts")
+    c.execute("DROP TABLE IF EXISTS messages")
+
+# 創建新表
+c.execute('''CREATE TABLE users (
+    id INTEGER PRIMARY KEY, 
+    username TEXT UNIQUE, 
+    password_hash TEXT, 
+    role TEXT DEFAULT 'user',
+    avatar TEXT,
+    bio TEXT,
+    email TEXT,
+    join_date TEXT
 )''')
 
-c.execute('''CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY, title TEXT, content TEXT, author TEXT, 
-    date TEXT, category TEXT DEFAULT '一般', view_count INTEGER DEFAULT 0
+c.execute('''CREATE TABLE posts (
+    id INTEGER PRIMARY KEY, 
+    title TEXT, 
+    content TEXT, 
+    author TEXT, 
+    date TEXT, 
+    category TEXT DEFAULT '一般'
 )''')
 
-c.execute('''CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY, post_id INTEGER, content TEXT, author TEXT, date TEXT
+c.execute('''CREATE TABLE messages (
+    id INTEGER PRIMARY KEY, 
+    post_id INTEGER, 
+    content TEXT, 
+    author TEXT, 
+    date TEXT
 )''')
 conn.commit()
 
@@ -37,68 +68,33 @@ def time_ago(d):
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS - 參考主流論壇設計 ====================
+# ==================== CSS - Reddit風格 ====================
 st.markdown("""
 <style>
-    /* ========== 基礎樣式 ========== */
-    * {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
+    * { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .stApp { background-color: #dae0e6; color: #1c1c1c; }
+    h1 { color: #1c1c1c !important; font-size: 28px !important; font-weight: 700 !important; }
+    h2, h3 { color: #1c1c1c !important; font-weight: 600 !important; }
     
-    .stApp {
-        background-color: #dae0e6;  /* Reddit式淺灰背景 */
-        color: #1c1c1c;
-    }
-    
-    /* ========== 主要文字 ========== */
-    .main-text {
-        color: #1c1c1c;
-    }
-    
-    /* ========== 標題 ========== */
-    h1 {
-        color: #1c1c1c !important;
-        font-size: 28px !important;
-        font-weight: 700 !important;
-    }
-    
-    h2, h3, h4 {
-        color: #1c1c1c !important;
-        font-weight: 600 !important;
-    }
-    
-    /* ========== 按鈕 ========== */
     .stButton > button {
-        background-color: #0079d3 !important;  /* Reddit藍 */
+        background-color: #0079d3 !important;
         color: white !important;
         border: none !important;
         border-radius: 999px !important;
         padding: 8px 20px !important;
         font-weight: 600 !important;
-        font-size: 14px !important;
     }
+    .stButton > button:hover { background-color: #006cbd !important; }
     
-    .stButton > button:hover {
-        background-color: #006cbd !important;
-    }
-    
-    /* ========== 輸入框 ========== */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
         border: 1px solid #edeff1 !important;
         border-radius: 4px !important;
-        padding: 10px 12px !important;
+        padding: 10px !important;
         background-color: white !important;
         color: #1c1c1c !important;
     }
     
-    .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: #0079d3 !important;
-        box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.2) !important;
-    }
-    
-    /* ========== 卡片 (討論帖樣式) ========== */
     .post-card {
         background-color: white !important;
         border: 1px solid #ccc !important;
@@ -107,7 +103,6 @@ st.markdown("""
         margin: 8px 0 !important;
     }
     
-    /* ========== 標籤 ========== */
     .category-tag {
         display: inline-block;
         padding: 2px 8px;
@@ -115,23 +110,16 @@ st.markdown("""
         color: white !important;
         border-radius: 2px;
         font-size: 12px;
-        font-weight: 500;
         margin-right: 8px;
     }
-    
     .category-tag.一般 { background-color: #878a8c; }
     .category-tag.討論 { background-color: #0079d3; }
     .category-tag.問題 { background-color: #ff4500; }
     .category-tag.分享 { background-color: #46d160; }
     .category-tag.吹水 { background-color: #ff66ac; }
     
-    /* ========== 側邊欄 ========== */
-    [data-testid="stSidebar"] {
-        background-color: white !important;
-        border-left: 1px solid #edeff1 !important;
-    }
+    [data-testid="stSidebar"] { background-color: white !important; border-left: 1px solid #edeff1 !important; }
     
-    /* ========== 擴展器 ========== */
     .streamlit-expanderHeader {
         background-color: white !important;
         border: 1px solid #ccc !important;
@@ -139,39 +127,14 @@ st.markdown("""
         color: #1c1c1c !important;
     }
     
-    /* ========== Tabs ========== */
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: white !important;
-        border-radius: 4px !important;
-        padding: 4px !important;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 4px !important;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: #0079d3 !important;
-        color: white !important;
-    }
-    
-    /* ========== 文字顏色 ========== */
-    .text-muted {
-        color: #7c7c7c;
-        font-size: 12px;
-    }
-    
-    .text-secondary {
-        color: #787c7e;
-        font-size: 12px;
-    }
+    .text-muted { color: #7c7c7c; font-size: 12px; }
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== 標題區域 ====================
+# ==================== 標題 ====================
 st.markdown("""
 <div style="background-color: white; padding: 16px 24px; margin: -20px -20px 16px -20px; border-bottom: 1px solid #edeff1;">
-    <h1 style="margin: 0 !important; padding: 0 !important;">💬 討論區</h1>
+    <h1 style="margin: 0 !important;">💬 討論區</h1>
     <p style="color: #7c7c7c; margin: 8px 0 0 0; font-size: 14px;">分享 · 傾偈 · 交流</p>
 </div>
 """, unsafe_allow_html=True)
@@ -187,16 +150,15 @@ if 'user' not in st.session_state:
         password = st.text_input("密碼", type="password", key="login_pass", placeholder="密碼")
         
         if st.button("登入"):
-            if username and password:
-                c.execute("SELECT password_hash, role, avatar FROM users WHERE username=?", (username,))
-                user = c.fetchone()
-                if user and user[0] == hash_pw(password):
-                    st.session_state['user'] = username
-                    st.session_state['role'] = user[1]
-                    st.session_state['avatar'] = user[2]
-                    st.rerun()
-                else:
-                    st.error("用戶名或密碼錯誤")
+            c.execute("SELECT password_hash, role, avatar FROM users WHERE username=?", (username,))
+            user = c.fetchone()
+            if user and user[0] == hash_pw(password):
+                st.session_state['user'] = username
+                st.session_state['role'] = user[1]
+                st.session_state['avatar'] = user[2]
+                st.rerun()
+            else:
+                st.error("用戶名或密碼錯誤")
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col_reg:
@@ -234,14 +196,11 @@ else:
     user = st.session_state['user']
     role = st.session_state.get('role', 'user')
     
-    # 側邊欄
     with st.sidebar:
-        st.markdown(f"""
-        <div style="background: white; padding: 12px; border-radius: 4px; margin-bottom: 12px;">
+        st.markdown(f"""<div style="background: white; padding: 12px; border-radius: 4px; margin-bottom: 12px;">
             <strong style="font-size: 16px;">👤 {user}</strong>
             <span style="background: #878a8c; color: white; padding: 2px 8px; border-radius: 2px; font-size: 12px; margin-left: 8px;">{role}</span>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
         
         if st.button("登出"):
             st.session_state.clear()
@@ -264,10 +223,8 @@ else:
             else:
                 st.error("請填寫標題和內容")
     
-    # 搜尋
     search_term = st.text_input("🔍 搜尋帖子...", placeholder="輸入關鍵詞...")
     
-    # 統計
     c.execute("SELECT COUNT(*) FROM users")
     c.execute("SELECT COUNT(*) FROM posts")
     c.execute("SELECT COUNT(*) FROM messages")
@@ -292,7 +249,6 @@ else:
     </div>
     """, unsafe_allow_html=True)
     
-    # 帖子列表
     query = f"%{search_term}%" if search_term else "%"
     c.execute("SELECT * FROM posts WHERE title LIKE ? OR content LIKE ? ORDER BY date DESC", (query, query))
     posts = c.fetchall()
@@ -301,7 +257,6 @@ else:
     
     for post in posts:
         with st.expander(f"📌 {post[1]}"):
-            # 作者和時間
             c.execute("SELECT avatar FROM users WHERE username=?", (post[3],))
             av = c.fetchone()
             
@@ -310,22 +265,15 @@ else:
                 if av and av[0]:
                     st.markdown(f'<img src="data:image/png;base64,{av[0]}" style="width:40px;height:40px;border-radius:50%;">', unsafe_allow_html=True)
                 else:
-                    st.markdown(f"""
-                    <div style="width:40px;height:40px;background:#878a8c;border-radius:50%;
+                    st.markdown(f"""<div style="width:40px;height:40px;background:#878a8c;border-radius:50%;
                                 display:flex;align-items:center;justify-content:center;color:white;
-                                font-weight:600;font-size:14px;">
-                        {post[3][0].upper()}
-                    </div>
-                    """, unsafe_allow_html=True)
+                                font-weight:600;font-size:14px;">{post[3][0].upper()}</div>""", unsafe_allow_html=True)
             
             with col_content:
-                st.markdown(f"""
-                <span class="category-tag {post[5]}">{post[5]}</span>
-                <span class="text-muted">{post[4]} · {post[3]}</span>
-                """, unsafe_allow_html=True)
+                st.markdown(f"""<span class="category-tag {post[5]}">{post[5]}</span>
+                <span class="text-muted">{post[4]} · {post[3]}</span>""", unsafe_allow_html=True)
                 st.write(post[2])
             
-            # 留言
             st.markdown("---")
             st.markdown("**💬 留言**")
             c.execute("SELECT * FROM messages WHERE post_id=? ORDER BY date", (post[0],))
@@ -333,7 +281,6 @@ else:
             for msg in msgs:
                 st.markdown(f"- **{msg[3]}**: {msg[2]} <span class='text-muted'>({time_ago(msg[4])})</span>", unsafe_allow_html=True)
             
-            # 發留言
             msg_content = st.text_input("留言", key=f"msg_{post[0]}", placeholder="寫留言...")
             if st.button("發送", key=f"send_{post[0]}"):
                 if msg_content:
@@ -342,10 +289,7 @@ else:
                     conn.commit()
                     st.rerun()
 
-# 底部
 st.markdown("""
 <hr style="margin: 24px 0; border: none; border-top: 1px solid #edeff1;">
-<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">
-    💬 討論區
-</div>
+<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">💬 討論區</div>
 """, unsafe_allow_html=True)
