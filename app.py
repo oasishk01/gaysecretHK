@@ -3,37 +3,22 @@ import sqlite3
 from datetime import datetime
 import hashlib
 
-# ==================== 初始化 (安全模式) ====================
+# ==================== 初始化 ====================
 conn = sqlite3.connect('forum.db', check_same_thread=False)
 c = conn.cursor()
 
-# 只創建表，如果存在就跳過
 c.execute('''CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY, 
-    username TEXT UNIQUE, 
-    password_hash TEXT, 
-    role TEXT DEFAULT 'user',
-    avatar TEXT,
-    bio TEXT,
-    email TEXT,
-    join_date TEXT
+    id INTEGER PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, 
+    role TEXT DEFAULT 'user', join_date TEXT
 )''')
 
 c.execute('''CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY, 
-    title TEXT, 
-    content TEXT, 
-    author TEXT, 
-    date TEXT, 
-    category TEXT DEFAULT '一般'
+    id INTEGER PRIMARY KEY, title TEXT, content TEXT, author TEXT, 
+    date TEXT, category TEXT DEFAULT '一般'
 )''')
 
 c.execute('''CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY, 
-    post_id INTEGER, 
-    content TEXT, 
-    author TEXT, 
-    date TEXT
+    id INTEGER PRIMARY KEY, post_id INTEGER, content TEXT, author TEXT, date TEXT
 )''')
 conn.commit()
 
@@ -52,11 +37,24 @@ def time_ago(d):
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS ====================
+# ==================== CSS - 隱藏Streamlit + Reddit風格 ====================
 st.markdown("""
 <style>
+    /* 隱藏 Streamlit 皇冠/footer */
+    #MainMenu { visibility: hidden; }
+    footer { visibility: hidden; }
+    .stApp > header { display: none; }
+    
+    /* 底部 Streamlit footer 完全隱藏 */
+    div[data-testid="stFooter"] { display: none !important; }
+    
+    /* 還有隱藏所有 footer 相關 */
+    .stDeployButton { display: none !important; }
+    
+    /* ========== 基礎樣式 ========== */
     * { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .stApp { background-color: #dae0e6; color: #1c1c1c; }
+    
     h1 { color: #1c1c1c !important; font-size: 28px !important; font-weight: 700 !important; }
     h2, h3 { color: #1c1c1c !important; font-weight: 600 !important; }
     
@@ -264,7 +262,10 @@ else:
                     conn.commit()
                     st.rerun()
 
+# 底部
 st.markdown("""
 <hr style="margin: 24px 0; border: none; border-top: 1px solid #edeff1;">
-<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">💬 討論區</div>
+<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">
+    💬 討論區
+</div>
 """, unsafe_allow_html=True)
