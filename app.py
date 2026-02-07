@@ -37,79 +37,71 @@ def time_ago(d):
 # ==================== 頁面設置 ====================
 st.set_page_config(page_title="討論區", page_icon="💬", layout="wide")
 
-# ==================== CSS - 只隱藏皇冠，保留功能 ====================
+# ==================== CSS - 最簡單：白底黑字 ====================
 st.markdown("""
 <style>
-    /* 只隱藏Streamlit footer (皇冠)，保留其他 */
-    footer { visibility: hidden !important; }
-    div[data-testid="stFooter"] { visibility: hidden !important; }
+    /* 全部白色背景 */
+    .stApp { background-color: #ffffff; color: #000000; }
     
-    /* 基礎樣式 */
-    * { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .stApp { background-color: #dae0e6; }
+    /* 全部黑色文字 */
+    * { color: #000000 !important; }
     
-    h1 { color: #1c1c1c !important; font-size: 28px !important; font-weight: 700 !important; text-align: center; }
-    h2, h3 { color: #1c1c1c !important; font-weight: 600 !important; }
+    /* 標題 */
+    h1, h2, h3 { color: #000000 !important; font-weight: bold; }
     
+    /* 按鈕 */
     .stButton > button {
-        background-color: #0079d3 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 999px !important;
-        padding: 8px 20px !important;
-        font-weight: 600 !important;
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        border-radius: 4px !important;
     }
-    .stButton > button:hover { background-color: #006cbd !important; }
     
+    /* 輸入框 - 白底黑字 */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        border: 1px solid #edeff1 !important;
-        border-radius: 4px !important;
-        padding: 10px !important;
-        background-color: white !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #000000 !important;
     }
     
+    /* 卡片 */
     .post-card {
-        background-color: white !important;
-        border: 1px solid #ccc !important;
+        background-color: #ffffff !important;
+        border: 1px solid #000000 !important;
         border-radius: 4px !important;
         padding: 8px !important;
         margin: 8px 0 !important;
     }
     
+    /* 標籤 */
     .category-tag {
         display: inline-block;
         padding: 2px 8px;
-        background-color: #878a8c;
-        color: white !important;
+        background-color: #000000;
+        color: #ffffff !important;
         border-radius: 2px;
         font-size: 12px;
-        margin-right: 8px;
     }
-    .category-tag.一般 { background-color: #878a8c; }
-    .category-tag.討論 { background-color: #0079d3; }
-    .category-tag.問題 { background-color: #ff4500; }
-    .category-tag.分享 { background-color: #46d160; }
-    .category-tag.吹水 { background-color: #ff66ac; }
     
-    [data-testid="stSidebar"] { background-color: white !important; border-left: 1px solid #edeff1 !important; }
+    /* 側邊欄 */
+    [data-testid="stSidebar"] { background-color: #ffffff !important; }
     
+    /* 擴展器 */
     .streamlit-expanderHeader {
-        background-color: white !important;
-        border: 1px solid #ccc !important;
-        border-radius: 4px !important;
-        color: #1c1c1c !important;
+        background-color: #ffffff !important;
+        border: 1px solid #000000 !important;
     }
     
-    .text-muted { color: #7c7c7c; font-size: 12px; }
+    /* Footer */
+    footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==================== 標題 ====================
 st.markdown("""
-<div style="background-color: white; padding: 16px 24px; margin: -20px -20px 16px -20px; border-bottom: 1px solid #edeff1;">
+<div style="background-color: #ffffff; padding: 16px 24px; margin: -20px -20px 16px -20px; border-bottom: 2px solid #000000;">
     <h1>💬 討論區</h1>
-    <p style="color: #7c7c7c; margin: 8px 0 0 0; font-size: 14px;">分享 · 傾偈 · 交流</p>
+    <p style="color: #666666;">分享 · 傾偈 · 交流</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -168,9 +160,9 @@ else:
     role = st.session_state.get('role', 'user')
     
     with st.sidebar:
-        st.markdown(f"""<div style="background: white; padding: 12px; border-radius: 4px; margin-bottom: 12px;">
-            <strong style="font-size: 16px;">👤 {user}</strong>
-            <span style="background: #878a8c; color: white; padding: 2px 8px; border-radius: 2px; font-size: 12px; margin-left: 8px;">{role}</span>
+        st.markdown(f"""<div style="background: #ffffff; padding: 12px; border: 1px solid #000; margin-bottom: 12px;">
+            <strong>{user}</strong>
+            <span style="background: #000; color: #fff; padding: 2px 8px; font-size: 12px; margin-left: 8px;">{role}</span>
         </div>""", unsafe_allow_html=True)
         
         if st.button("登出"):
@@ -205,17 +197,17 @@ else:
     
     st.markdown(f"""
     <div style="display: flex; gap: 12px; margin: 16px 0;">
-        <div style="background: white; padding: 12px 20px; border-radius: 4px; border: 1px solid #ccc; flex: 1; text-align: center;">
-            <div style="font-size: 20px; font-weight: 700; color: #0079d3;">{u_cnt}</div>
-            <div style="color: #7c7c7c; font-size: 12px;">用戶</div>
+        <div style="background: #ffffff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
+            <div style="font-size: 20px; font-weight: bold;">{u_cnt}</div>
+            <div style="color: #666;">用戶</div>
         </div>
-        <div style="background: white; padding: 12px 20px; border-radius: 4px; border: 1px solid #ccc; flex: 1; text-align: center;">
-            <div style="font-size: 20px; font-weight: 700; color: #0079d3;">{p_cnt}</div>
-            <div style="color: #7c7c7c; font-size: 12px;">帖子</div>
+        <div style="background: #ffffff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
+            <div style="font-size: 20px; font-weight: bold;">{p_cnt}</div>
+            <div style="color: #666;">帖子</div>
         </div>
-        <div style="background: white; padding: 12px 20px; border-radius: 4px; border: 1px solid #ccc; flex: 1; text-align: center;">
-            <div style="font-size: 20px; font-weight: 700; color: #0079d3;">{m_cnt}</div>
-            <div style="color: #7c7c7c; font-size: 12px;">留言</div>
+        <div style="background: #ffffff; padding: 12px 20px; border: 1px solid #000; flex: 1; text-align: center;">
+            <div style="font-size: 20px; font-weight: bold;">{m_cnt}</div>
+            <div style="color: #666;">留言</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -230,13 +222,13 @@ else:
         with st.expander(f"📌 {post[1]}"):
             col_author, col_content = st.columns([1, 5])
             with col_author:
-                st.markdown(f"""<div style="width:40px;height:40px;background:#878a8c;border-radius:50%;
-                            display:flex;align-items:center;justify-content:center;color:white;
-                            font-weight:600;font-size:14px;">{post[3][0].upper()}</div>""", unsafe_allow_html=True)
+                st.markdown(f"""<div style="width:40px;height:40px;background:#000;border-radius:50%;
+                            display:flex;align-items:center;justify-content:center;color:#fff;
+                            font-weight:bold;font-size:14px;">{post[3][0].upper()}</div>""", unsafe_allow_html=True)
             
             with col_content:
-                st.markdown(f"""<span class="category-tag {post[5]}">{post[5]}</span>
-                <span class="text-muted">{post[4]} · {post[3]}</span>""", unsafe_allow_html=True)
+                st.markdown(f"""<span class="category-tag">{post[5]}</span>
+                <span style="color:#666;font-size:12px;">{post[4]} · {post[3]}</span>""", unsafe_allow_html=True)
                 st.write(post[2])
             
             st.markdown("---")
@@ -244,7 +236,7 @@ else:
             c.execute("SELECT * FROM messages WHERE post_id=? ORDER BY date", (post[0],))
             msgs = c.fetchall()
             for msg in msgs:
-                st.markdown(f"- **{msg[3]}**: {msg[2]} <span class='text-muted'>({time_ago(msg[4])})</span>", unsafe_allow_html=True)
+                st.markdown(f"- **{msg[3]}**: {msg[2]} <span style='color:#666;'>({time_ago(msg[4])})</span>", unsafe_allow_html=True)
             
             msg_content = st.text_input("留言", key=f"msg_{post[0]}", placeholder="寫留言...")
             if st.button("發送", key=f"send_{post[0]}"):
@@ -255,6 +247,6 @@ else:
                     st.rerun()
 
 st.markdown("""
-<hr style="margin: 24px 0; border: none; border-top: 1px solid #edeff1;">
-<div style="text-align: center; color: #7c7c7c; font-size: 12px; padding: 16px;">💬 討論區</div>
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #000;">
+<div style="text-align: center; color: #000; font-size: 12px; padding: 16px;">討論區</div>
 """, unsafe_allow_html=True)
